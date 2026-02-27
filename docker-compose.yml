@@ -1,0 +1,97 @@
+# RobotFleetOS: one container per layer and per node.
+# Lower layers (zone, edge) keep operating if upper layers (fleet, area) are down;
+# they only depend on NATS.
+#
+# Run: docker compose up -d
+# Dashboard: http://localhost:8080
+
+services:
+  nats:
+    image: nats:latest
+    container_name: robotfleetos-nats
+    ports:
+      - "4222:4222"
+    restart: unless-stopped
+
+  fleet:
+    build: .
+    container_name: robotfleetos-fleet
+    command: ["./bin/fleet"]
+    environment:
+      MESSAGING_URL: "nats://nats:4222"
+      FLEET_CONFIG: "/config/fleet.yaml"
+    volumes:
+      - ./deploy/docker:/config:ro
+    ports:
+      - "8080:8080"
+    depends_on: [nats]
+    restart: unless-stopped
+
+  area:
+    build: .
+    container_name: robotfleetos-area
+    command: ["./bin/area"]
+    environment:
+      MESSAGING_URL: "nats://nats:4222"
+      AREA_CONFIG: "/config/area.yaml"
+    volumes:
+      - ./deploy/docker:/config:ro
+    depends_on: [nats]
+    restart: unless-stopped
+
+  zone-1:
+    build: .
+    container_name: robotfleetos-zone-1
+    command: ["./bin/zone"]
+    environment:
+      MESSAGING_URL: "nats://nats:4222"
+      ZONE_CONFIG: "/config/zone-1.yaml"
+    volumes:
+      - ./deploy/docker:/config:ro
+    depends_on: [nats]
+    restart: unless-stopped
+
+  zone-2:
+    build: .
+    container_name: robotfleetos-zone-2
+    command: ["./bin/zone"]
+    environment:
+      MESSAGING_URL: "nats://nats:4222"
+      ZONE_CONFIG: "/config/zone-2.yaml"
+    volumes:
+      - ./deploy/docker:/config:ro
+    depends_on: [nats]
+    restart: unless-stopped
+
+  edge-1:
+    build: .
+    container_name: robotfleetos-edge-1
+    command: ["./bin/edge"]
+    environment:
+      MESSAGING_URL: "nats://nats:4222"
+      EDGE_ROBOT_ID: "robot-1"
+      EDGE_ZONE_ID: "zone-1"
+    depends_on: [nats]
+    restart: unless-stopped
+
+  edge-2:
+    build: .
+    container_name: robotfleetos-edge-2
+    command: ["./bin/edge"]
+    environment:
+      MESSAGING_URL: "nats://nats:4222"
+      EDGE_ROBOT_ID: "robot-2"
+      EDGE_ZONE_ID: "zone-1"
+    depends_on: [nats]
+    restart: unless-stopped
+
+  edge-3:
+    build: .
+    container_name: robotfleetos-edge-3
+    command: ["./bin/edge"]
+    environment:
+      MESSAGING_URL: "nats://nats:4222"
+      EDGE_ROBOT_ID: "robot-3"
+      EDGE_ZONE_ID: "zone-2"
+    depends_on: [nats]
+    restart: unless-stopped

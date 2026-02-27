@@ -1,0 +1,24 @@
+# Git and IDE
+.git
+.gitignore
+.cursor
+*.md
+!README.md
+
+# Build artifacts and local installs
+bin/
+.gopath/
+go/
+*.tar.gz
+
+# Deploy configs (mount at runtime)
+deploy/
+
+# Scripts and docs (not needed in image)
+scripts/
+docs/
+*.sh
+
+# Test and dev
+*_test.go
+testdata/

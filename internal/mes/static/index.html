@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MES — Manufacturing Execution System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --success: #3fb950;
+      --warn: #d29922;
+      --danger: #f85149;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header h1 span { color: var(--accent); }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--success);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .status-pill.off { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+    .status-pill::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .status-pill.off::before { animation: none; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .card h2 {
+      margin: 0;
+      padding: 0.85rem 1.1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .card-body { padding: 1.1rem; }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+    }
+    button {
+      padding: 0.5rem 0.9rem;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: filter 0.15s;
+    }
+    button:hover { filter: brightness(1.1); }
+    button:active { filter: brightness(0.95); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.btn-secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+    button.btn-secondary:hover { border-color: var(--accent); }
+    button.btn-small { padding: 0.35rem 0.6rem; font-size: 0.8rem; }
+    button.btn-danger { background: var(--danger); color: #fff; }
+    .msg {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    .msg.success { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+    .msg.error { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+    .full-width { grid-column: 1 / -1; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+    .orders-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .orders-toolbar select { width: auto; min-width: 140px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+    tr:hover { background: rgba(255,255,255,0.03); }
+    .status-draft { color: var(--muted); }
+    .status-released, .status-in_progress { color: var(--accent); }
+    .status-completed { color: var(--success); }
+    .status-paused { color: var(--warn); }
+    .status-cancelled { color: var(--danger); }
+    .actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .empty-state { color: var(--muted); font-size: 0.9rem; padding: 1rem 0; text-align: center; }
+    .scrap-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .scrap-overlay.visible { display: flex; }
+    .scrap-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      min-width: 320px;
+    }
+    .scrap-box h3 { margin: 0 0 1rem 0; font-size: 1rem; color: var(--muted); }
+    .scrap-box .scrap-actions { margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MES — <span>Manufacturing</span> Execution System</h1>
+    <div id="healthStatus" class="status-pill off">Checking…</div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Create production order</h2>
+      <div class="card-body">
+        <form id="createForm">
+          <div>
+            <label for="sku">SKU *</label>
+            <input id="sku" name="sku" type="text" placeholder="e.g. WIDGET-001" required>
+          </div>
+          <div class="form-row">
+            <div>
+              <label for="quantity">Quantity *</label>
+              <input id="quantity" name="quantity" type="number" min="1" value="100" required>
+            </div>
+            <div>
+              <label for="priority">Priority (1–10)</label>
+              <input id="priority" name="priority" type="number" min="1" max="10" value="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label for="areaId">Area ID *</label>
+              <input id="areaId" name="area_id" type="text" placeholder="e.g. area-1" required>
+            </div>
+            <div>
+              <label for="zoneId">Zone ID (optional)</label>
+              <input id="zoneId" name="zone_id" type="text" placeholder="e.g. zone-1">
+            </div>
+          </div>
+          <div>
+            <label for="erpRef">ERP order reference (optional)</label>
+            <input id="erpRef" name="erp_order_ref" type="text" placeholder="e.g. PO-12345">
+          </div>
+          <button type="submit" id="createBtn">Create order</button>
+        </form>
+        <div id="createMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Production orders</h2>
+      <div class="card-body">
+        <div class="orders-toolbar">
+          <label style="margin:0;display:flex;align-items:center;gap:0.5rem">
+            <span>Status:</span>
+            <select id="statusFilter">
+              <option value="">All</option>
+              <option value="draft">Draft</option>
+              <option value="in_progress">In progress</option>
+              <option value="completed">Completed</option>
+              <option value="paused">Paused</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </label>
+          <button type="button" id="refreshBtn" class="btn-secondary btn-small">Refresh</button>
+        </div>
+        <div id="ordersTableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>SKU</th>
+                <th>Qty</th>
+                <th>Status</th>
+                <th>Area</th>
+                <th>Fleet WO</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody">
+              <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="scrapOverlay" class="scrap-overlay">
+    <div class="scrap-box">
+      <h3 id="scrapTitle">Report scrap</h3>
+      <div>
+        <label for="scrapQty">Quantity</label>
+        <input id="scrapQty" type="number" min="1" value="1">
+      </div>
+      <div style="margin-top:0.75rem">
+        <label for="scrapReason">Reason</label>
+        <input id="scrapReason" type="text" placeholder="e.g. defect, rework">
+      </div>
+      <div class="scrap-actions">
+        <button type="button" id="scrapCancel" class="btn-secondary">Cancel</button>
+        <button type="button" id="scrapSubmit">Submit scrap</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const base = '';
+    function api(path) { return fetch(base + path).then(r => r.json()); }
+    function apiPost(path, body) {
+      return fetch(base + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
+      });
+    }
+
+    const healthEl = document.getElementById('healthStatus');
+    function checkHealth() {
+      api('/health').then(d => {
+        healthEl.textContent = d.status === 'ok' ? 'MES online' : 'Degraded';
+        healthEl.classList.toggle('off', d.status !== 'ok');
+      }).catch(() => {
+        healthEl.textContent = 'Offline';
+        healthEl.classList.add('off');
+      });
+    }
+    checkHealth();
+    setInterval(checkHealth, 8000);
+
+    const createForm = document.getElementById('createForm');
+    const createMsg = document.getElementById('createMsg');
+    const createBtn = document.getElementById('createBtn');
+    createForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      createMsg.style.display = 'none';
+      createBtn.disabled = true;
+      const body = {
+        sku: document.getElementById('sku').value.trim(),
+        quantity: parseInt(document.getElementById('quantity').value, 10) || 1,
+        area_id: document.getElementById('areaId').value.trim(),
+        priority: parseInt(document.getElementById('priority').value, 10) || 1
+      };
+      const zoneId = document.getElementById('zoneId').value.trim();
+      if (zoneId) body.zone_id = zoneId;
+      const erpRef = document.getElementById('erpRef').value.trim();
+      if (erpRef) body.erp_order_ref = erpRef;
+      try {
+        const res = await apiPost('/orders', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          createMsg.textContent = 'Order created: ' + (data.id || '');
+          createMsg.className = 'msg success';
+          createMsg.style.display = 'block';
+          createForm.reset();
+          document.getElementById('quantity').value = 100;
+          document.getElementById('priority').value = 1;
+          loadOrders();
+        } else {
+          createMsg.textContent = data.error || data.message || res.statusText || 'Request failed';
+          createMsg.className = 'msg error';
+          createMsg.style.display = 'block';
+        }
+      } catch (err) {
+        createMsg.textContent = err.message || 'Network error';
+        createMsg.className = 'msg error';
+        createMsg.style.display = 'block';
+      }
+      createBtn.disabled = false;
+    });
+
+    const ordersBody = document.getElementById('ordersBody');
+    const statusFilter = document.getElementById('statusFilter');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function statusClass(s) {
+      if (!s) return '';
+      return 'status-' + String(s).replace(/-/g, '_');
+    }
+
+    async function postOrderAction(id, action) {
+      const res = await apiPost('/orders/' + id + '/' + action);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) loadOrders();
+      else alert(data.error || data.message || res.statusText || 'Failed');
+    }
+
+    let scrapOrderId = null;
+    const scrapOverlay = document.getElementById('scrapOverlay');
+    const scrapTitle = document.getElementById('scrapTitle');
+    document.getElementById('scrapCancel').onclick = () => {
+      scrapOverlay.classList.remove('visible');
+      scrapOrderId = null;
+    };
+    document.getElementById('scrapSubmit').onclick = async () => {
+      if (!scrapOrderId) return;
+      const qty = parseInt(document.getElementById('scrapQty').value, 10) || 1;
+      const reason = document.getElementById('scrapReason').value.trim() || 'No reason';
+      const res = await apiPost('/orders/' + scrapOrderId + '/scrap', { quantity: qty, reason: reason });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        scrapOverlay.classList.remove('visible');
+        scrapOrderId = null;
+        loadOrders();
+      } else {
+        alert(data.error || data.message || res.statusText || 'Failed');
+      }
+    };
+
+    document.getElementById('ordersTableWrap').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-order-id][data-action]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-order-id');
+      const action = btn.getAttribute('data-action');
+      if (action === 'scrap') {
+        scrapOrderId = id;
+        scrapTitle.textContent = 'Report scrap — ' + id;
+        document.getElementById('scrapQty').value = 1;
+        document.getElementById('scrapReason').value = '';
+        scrapOverlay.classList.add('visible');
+      } else {
+        postOrderAction(id, action);
+      }
+    });
+
+    function actionHtml(label, className, orderId, action) {
+      return '<button type="button" class="' + (className || 'btn-secondary') + ' btn-small" data-order-id="' + escapeHtml(orderId) + '" data-action="' + escapeHtml(action) + '">' + escapeHtml(label) + '</button>';
+    }
+
+    function renderOrders(orders) {
+      if (!orders || orders.length === 0) {
+        ordersBody.innerHTML = '<tr><td colspan="7" class="empty-state">No orders match the filter.</td></tr>';
+        return;
+      }
+      ordersBody.innerHTML = orders.map(o => {
+        const actions = [];
+        if (o.status === 'draft' || o.status === 'paused') {
+          actions.push(actionHtml('Release', 'btn-secondary', o.id, 'release'));
+        }
+        if (o.status === 'in_progress') {
+          actions.push(actionHtml('Pause', 'btn-secondary', o.id, 'pause'));
+          actions.push(actionHtml('Complete', '', o.id, 'complete'));
+        }
+        if (o.status !== 'completed' && o.status !== 'cancelled') {
+          actions.push(actionHtml('Scrap', 'btn-danger', o.id, 'scrap'));
+          actions.push(actionHtml('Cancel', 'btn-danger', o.id, 'cancel'));
+        }
+        const fleetWo = o.fleet_work_order_id ? escapeHtml(o.fleet_work_order_id) : '—';
+        return '<tr>' +
+          '<td class="mono">' + escapeHtml(o.id) + '</td>' +
+          '<td class="mono">' + escapeHtml(o.sku) + '</td>' +
+          '<td>' + o.quantity + (o.quantity_scrapped > 0 ? ' <span class="status-cancelled">(-' + o.quantity_scrapped + ')</span>' : '') + '</td>' +
+          '<td class="' + statusClass(o.status) + '">' + escapeHtml(o.status) + '</td>' +
+          '<td>' + escapeHtml(o.area_id) + '</td>' +
+          '<td class="mono" style="font-size:0.8rem">' + fleetWo + '</td>' +
+          '<td><div class="actions">' + actions.join('') + '</div></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    async function loadOrders() {
+      const status = statusFilter.value || '';
+      const path = status ? '/orders?status=' + encodeURIComponent(status) : '/orders';
+      try {
+        const data = await api(path);
+        const orders = data.orders || [];
+        renderOrders(orders);
+      } catch (err) {
+        ordersBody.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load: ' + escapeHtml(err.message) + '</td></tr>';
+      }
+    }
+
+    statusFilter.addEventListener('change', loadOrders);
+    refreshBtn.addEventListener('click', loadOrders);
+    loadOrders();
+  </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QMS — Quality Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --success: #3fb950; --danger: #f85149; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Outfit', system-ui, sans-serif; font-size: 15px; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; }
+    header h1 { margin: 0; font-size: 1.35rem; }
+    header h1 span { color: var(--accent); }
+    main { max-width: 1000px; margin: 0 auto; padding: 1.5rem; display: grid; gap: 1.5rem; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 700px) { main { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .card h2 { margin: 0; padding: 0.85rem 1.1rem; font-size: 0.95rem; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .card-body { padding: 1.1rem; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.25rem; }
+    input, select { width: 100%; padding: 0.5rem 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.9rem; }
+    button { padding: 0.5rem 0.9rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    button.btn-secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+    button.btn-small { padding: 0.35rem 0.6rem; font-size: 0.8rem; }
+    .full-width { grid-column: 1 / -1; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .msg { padding: 0.5rem; border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; }
+    .msg.success { background: rgba(63,185,80,0.15); color: var(--success); }
+    .msg.error { background: rgba(248,81,73,0.15); color: var(--danger); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-size: 0.8rem; }
+    .empty-state { color: var(--muted); padding: 1rem; text-align: center; font-size: 0.9rem; }
+    .pass { color: var(--success); }
+    .fail { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <header><h1>QMS — <span>Quality</span> Management</h1></header>
+  <main>
+    <section class="card">
+      <h2>Record inspection</h2>
+      <div class="card-body">
+        <form id="insForm">
+          <div class="form-row">
+            <div><label>Serial</label><input id="insSerial" type="text" placeholder="SN-001"></div>
+            <div><label>Lot</label><input id="insLot" type="text" placeholder="LOT-001"></div>
+          </div>
+          <div><label>SKU *</label><input id="insSku" type="text" required></div>
+          <div class="form-row">
+            <div><label>Station</label><input id="insStation" type="text"></div>
+            <div><label>Result *</label><select id="insResult"><option value="pass">Pass</option><option value="fail">Fail</option></select></div>
+          </div>
+          <div><label>Notes</label><input id="insNotes" type="text"></div>
+          <button type="submit">Record</button>
+        </form>
+        <div id="insMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Create NCR</h2>
+      <div class="card-body">
+        <form id="ncrForm">
+          <div class="form-row">
+            <div><label>Serial</label><input id="ncrSerial" type="text"></div>
+            <div><label>Lot</label><input id="ncrLot" type="text"></div>
+          </div>
+          <div><label>SKU *</label><input id="ncrSku" type="text" required></div>
+          <div><label>Description *</label><input id="ncrDesc" type="text" required></div>
+          <button type="submit">Create NCR</button>
+        </form>
+        <div id="ncrMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Place hold</h2>
+      <div class="card-body">
+        <form id="holdForm">
+          <div class="form-row">
+            <div><label>Serial</label><input id="holdSerial" type="text"></div>
+            <div><label>Lot</label><input id="holdLot" type="text"></div>
+          </div>
+          <div><label>Reason *</label><input id="holdReason" type="text" required></div>
+          <button type="submit">Place hold</button>
+        </form>
+        <div id="holdMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Inspections</h2>
+      <div class="card-body">
+        <div style="margin-bottom:0.75rem"><label>Filter: Serial <input id="insFilterSerial" type="text" style="width:10rem"> Lot <input id="insFilterLot" type="text" style="width:10rem"></label> <button type="button" id="insRefresh" class="btn-secondary btn-small">Refresh</button></div>
+        <table><thead><tr><th>ID</th><th>Serial</th><th>Lot</th><th>SKU</th><th>Station</th><th>Result</th><th>Time</th></tr></thead><tbody id="insBody"><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>NCRs</h2>
+      <div class="card-body">
+        <div style="margin-bottom:0.75rem">Status: <select id="ncrFilter"><option value="">All</option><option value="open">Open</option><option value="closed">Closed</option></select> <button type="button" id="ncrRefresh" class="btn-secondary btn-small">Refresh</button></div>
+        <table><thead><tr><th>ID</th><th>Serial</th><th>Lot</th><th>SKU</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead><tbody id="ncrBody"><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Holds</h2>
+      <div class="card-body">
+        <div style="margin-bottom:0.75rem"><label><input type="checkbox" id="holdActiveOnly" checked> Active only</label> <button type="button" id="holdRefresh" class="btn-secondary btn-small">Refresh</button></div>
+        <table><thead><tr><th>ID</th><th>Serial</th><th>Lot</th><th>Reason</th><th>Held at</th><th>Released</th><th>Actions</th></tr></thead><tbody id="holdBody"><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+  </main>
+  <script>
+    const base = '';
+    function api(path) { return fetch(base + path).then(r => r.json()); }
+    function apiPost(path, body) { return fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); }
+    function escapeHtml(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    document.getElementById('insForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('insMsg');
+      msg.style.display = 'none';
+      const body = { sku: document.getElementById('insSku').value.trim(), result: document.getElementById('insResult').value };
+      const serial = document.getElementById('insSerial').value.trim();
+      const lot = document.getElementById('insLot').value.trim();
+      if (serial) body.serial = serial; if (lot) body.lot = lot;
+      const station = document.getElementById('insStation').value.trim();
+      if (station) body.station_id = station;
+      const notes = document.getElementById('insNotes').value.trim();
+      if (notes) body.notes = notes;
+      try {
+        const res = await apiPost('/inspections', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) { msg.textContent = 'Recorded: ' + (data.id || ''); msg.className = 'msg success'; loadInspections(); } else { msg.textContent = data.error || res.statusText; msg.className = 'msg error'; }
+        msg.style.display = 'block';
+      } catch (err) { msg.textContent = err.message; msg.className = 'msg error'; msg.style.display = 'block'; }
+    };
+
+    document.getElementById('ncrForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('ncrMsg');
+      msg.style.display = 'none';
+      const body = { sku: document.getElementById('ncrSku').value.trim(), description: document.getElementById('ncrDesc').value.trim() };
+      const serial = document.getElementById('ncrSerial').value.trim();
+      const lot = document.getElementById('ncrLot').value.trim();
+      if (serial) body.serial = serial; if (lot) body.lot = lot;
+      try {
+        const res = await apiPost('/ncr', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) { msg.textContent = 'NCR created: ' + (data.id || ''); msg.className = 'msg success'; loadNCRs(); } else { msg.textContent = data.error || res.statusText; msg.className = 'msg error'; }
+        msg.style.display = 'block';
+      } catch (err) { msg.textContent = err.message; msg.className = 'msg error'; msg.style.display = 'block'; }
+    };
+
+    document.getElementById('holdForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('holdMsg');
+      msg.style.display = 'none';
+      const body = { reason: document.getElementById('holdReason').value.trim() };
+      const serial = document.getElementById('holdSerial').value.trim();
+      const lot = document.getElementById('holdLot').value.trim();
+      if (serial) body.serial = serial; if (lot) body.lot = lot;
+      try {
+        const res = await apiPost('/holds', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) { msg.textContent = 'Hold placed: ' + (data.id || ''); msg.className = 'msg success'; loadHolds(); } else { msg.textContent = data.error || res.statusText; msg.className = 'msg error'; }
+        msg.style.display = 'block';
+      } catch (err) { msg.textContent = err.message; msg.className = 'msg error'; msg.style.display = 'block'; }
+    };
+
+    async function loadInspections() {
+      const serial = document.getElementById('insFilterSerial').value.trim();
+      const lot = document.getElementById('insFilterLot').value.trim();
+      const q = new URLSearchParams();
+      if (serial) q.set('serial', serial); if (lot) q.set('lot', lot);
+      const d = await api('/inspections?' + q.toString());
+      const list = d.inspections || [];
+      const el = document.getElementById('insBody');
+      if (list.length === 0) el.innerHTML = '<tr><td colspan="7" class="empty-state">No inspections.</td></tr>';
+      else el.innerHTML = list.map(r => '<tr><td class="mono">' + escapeHtml(r.id) + '</td><td class="mono">' + escapeHtml(r.serial) + '</td><td class="mono">' + escapeHtml(r.lot) + '</td><td class="mono">' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.station_id) + '</td><td class="' + r.result + '">' + escapeHtml(r.result) + '</td><td class="mono">' + escapeHtml(r.created_at) + '</td></tr>').join('');
+    }
+
+    async function loadNCRs() {
+      const status = document.getElementById('ncrFilter').value;
+      const q = status ? '?status=' + encodeURIComponent(status) : '';
+      const d = await api('/ncr' + q);
+      const list = d.ncrs || [];
+      const el = document.getElementById('ncrBody');
+      if (list.length === 0) el.innerHTML = '<tr><td colspan="7" class="empty-state">No NCRs.</td></tr>';
+      else el.innerHTML = list.map(r => {
+        let actions = '';
+        if (r.status === 'open') actions = '<button type="button" class="btn-small" data-ncr-id="' + escapeHtml(r.id) + '">Close</button>';
+        return '<tr><td class="mono">' + escapeHtml(r.id) + '</td><td class="mono">' + escapeHtml(r.serial) + '</td><td class="mono">' + escapeHtml(r.lot) + '</td><td class="mono">' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.description) + '</td><td>' + escapeHtml(r.status) + '</td><td>' + actions + '</td></tr>';
+      }).join('');
+    }
+
+    document.getElementById('ncrBody').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-ncr-id]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-ncr-id');
+      await apiPost('/ncr/' + id + '/close');
+      loadNCRs();
+    });
+
+    async function loadHolds() {
+      const active = document.getElementById('holdActiveOnly').checked;
+      const d = await api('/holds?active=' + (active ? 'true' : 'false'));
+      const list = d.holds || [];
+      const el = document.getElementById('holdBody');
+      if (list.length === 0) el.innerHTML = '<tr><td colspan="7" class="empty-state">No holds.</td></tr>';
+      else el.innerHTML = list.map(h => {
+        let actions = '';
+        if (!h.released_at) actions = '<button type="button" class="btn-small" data-hold-id="' + escapeHtml(h.id) + '">Release</button>';
+        return '<tr><td class="mono">' + escapeHtml(h.id) + '</td><td class="mono">' + escapeHtml(h.serial) + '</td><td class="mono">' + escapeHtml(h.lot) + '</td><td>' + escapeHtml(h.reason) + '</td><td class="mono">' + escapeHtml(h.held_at) + '</td><td class="mono">' + (h.released_at || '—') + '</td><td>' + actions + '</td></tr>';
+      }).join('');
+    }
+
+    document.getElementById('holdBody').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-hold-id]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-hold-id');
+      await apiPost('/holds/' + id + '/release');
+      loadHolds();
+    });
+
+    document.getElementById('insRefresh').onclick = loadInspections;
+    document.getElementById('ncrRefresh').onclick = loadNCRs;
+    document.getElementById('ncrFilter').onchange = loadNCRs;
+    document.getElementById('holdRefresh').onclick = loadHolds;
+    document.getElementById('holdActiveOnly').onchange = loadHolds;
+    loadInspections();
+    loadNCRs();
+    loadHolds();
+  </script>
+</body>
+</html>

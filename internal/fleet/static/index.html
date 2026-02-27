@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RobotFleetOS — Fleet Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --success: #3fb950;
+      --warn: #d29922;
+      --danger: #f85149;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header h1 span { color: var(--accent); }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--success);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .status-pill.off { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+    .status-pill::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .status-pill.off::before { animation: none; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 700px) { main { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .card h2 {
+      margin: 0;
+      padding: 0.85rem 1.1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .card-body { padding: 1.1rem; }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: var(--muted); font-size: 0.9rem; }
+    .stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--accent); }
+    .areas-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .areas-list li {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .areas-list li:last-child { border-bottom: none; }
+    .areas-list .area-id { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+    .areas-list .area-robots { color: var(--muted); }
+    .empty-state { color: var(--muted); font-size: 0.9rem; padding: 0.5rem 0; }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+    }
+    button {
+      padding: 0.65rem 1.2rem;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: filter 0.15s;
+    }
+    button:hover { filter: brightness(1.1); }
+    button:active { filter: brightness(0.95); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.btn-secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+    button.btn-secondary:hover { border-color: var(--accent); }
+    .msg {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    .msg.success { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+    .msg.error { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+    .full-width { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Robot<span>Fleet</span>OS</h1>
+    <div id="healthStatus" class="status-pill off">Checking…</div>
+  </header>
+  <main>
+    <section class="card full-width">
+      <h2>Submit work order</h2>
+      <div class="card-body">
+        <form id="workOrderForm">
+          <div>
+            <label for="areaId">Area ID</label>
+            <input id="areaId" name="area_id" type="text" placeholder="e.g. area-1" required>
+          </div>
+          <div>
+            <label for="priority">Priority (1–10)</label>
+            <input id="priority" name="priority" type="number" min="1" max="10" value="1">
+          </div>
+          <div>
+            <label for="payload">Payload (JSON, optional)</label>
+            <input id="payload" name="payload" type="text" placeholder='e.g. [] or {"task":"pick"}'>
+          </div>
+          <button type="submit" id="submitBtn">Submit work order</button>
+        </form>
+        <div id="formMsg" class="msg" style="display:none"></div>
+        <p style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.9rem"><a href="/maintenance">Fleet maintenance</a> — firmware updates, maintenance tasks</p>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Recent work orders</h2>
+      <div class="card-body">
+        <p style="margin:0 0 0.75rem 0;color:var(--muted);font-size:0.85rem">Work orders sent to the fleet (from MES or this dashboard). Production orders show SKU × quantity; firmware shows version.</p>
+        <ul id="workOrdersList" class="areas-list">
+          <li class="empty-state">Loading…</li>
+        </ul>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Fleet state</h2>
+      <div class="card-body">
+        <div class="stat-row">
+          <span class="stat-label">Total robots</span>
+          <span class="stat-value mono" id="totalRobots">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Areas reported</span>
+          <span class="stat-value mono" id="areaCount">—</span>
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Areas</h2>
+      <div class="card-body">
+        <ul id="areasList" class="areas-list">
+          <li class="empty-state">No areas reporting yet. Start area controllers to see state.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+  <script>
+    const base = '';
+    function api(path) { return fetch(base + path).then(r => r.json()); }
+    function apiPost(path, body) {
+      return fetch(base + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    }
+
+    const healthEl = document.getElementById('healthStatus');
+    function checkHealth() {
+      api('/health').then(d => {
+        healthEl.textContent = d.status === 'ok' ? 'Fleet online' : 'Degraded';
+        healthEl.classList.toggle('off', d.status !== 'ok');
+      }).catch(() => {
+        healthEl.textContent = 'Offline';
+        healthEl.classList.add('off');
+      });
+    }
+    checkHealth();
+    setInterval(checkHealth, 8000);
+
+    const form = document.getElementById('workOrderForm');
+    const formMsg = document.getElementById('formMsg');
+    const submitBtn = document.getElementById('submitBtn');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formMsg.style.display = 'none';
+      submitBtn.disabled = true;
+      const raw = document.getElementById('payload').value.trim();
+      if (raw) {
+        try { JSON.parse(raw); } catch (_) {
+          formMsg.textContent = 'Invalid JSON in payload';
+          formMsg.className = 'msg error';
+          formMsg.style.display = 'block';
+          submitBtn.disabled = false;
+          return;
+        }
+      }
+      const body = {
+        area_id: document.getElementById('areaId').value.trim(),
+        priority: parseInt(document.getElementById('priority').value, 10) || 1,
+        payload: raw || ''
+      };
+      try {
+        const res = await apiPost('/work_orders', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          formMsg.textContent = 'Work order created: ' + (data.id || 'unknown');
+          formMsg.className = 'msg success';
+          formMsg.style.display = 'block';
+          form.reset();
+          document.getElementById('priority').value = 1;
+        } else {
+          formMsg.textContent = data.error || data.message || res.statusText || 'Request failed';
+          formMsg.className = 'msg error';
+          formMsg.style.display = 'block';
+        }
+      } catch (err) {
+        formMsg.textContent = err.message || 'Network error';
+        formMsg.className = 'msg error';
+        formMsg.style.display = 'block';
+      }
+      submitBtn.disabled = false;
+    });
+
+    const totalRobotsEl = document.getElementById('totalRobots');
+    const areaCountEl = document.getElementById('areaCount');
+    const areasListEl = document.getElementById('areasList');
+    function loadState() {
+      api('/state').then(d => {
+        totalRobotsEl.textContent = (d.total_robots != null) ? d.total_robots : '—';
+        const areas = d.areas || [];
+        areaCountEl.textContent = areas.length;
+        if (areas.length === 0) {
+          areasListEl.innerHTML = '<li class="empty-state">No areas reporting yet. Start area controllers to see state.</li>';
+        } else {
+          areasListEl.innerHTML = areas.map(a =>
+            `<li><span class="area-id">${escapeHtml(a.area_id)}</span> <span class="area-robots">${a.robot_count} robots, ${a.zone_count} zones</span></li>`
+          ).join('');
+        }
+      }).catch(() => {
+        totalRobotsEl.textContent = '—';
+        areaCountEl.textContent = '—';
+      });
+    }
+    loadState();
+    setInterval(loadState, 5000);
+
+    const workOrdersListEl = document.getElementById('workOrdersList');
+    function loadWorkOrders() {
+      api('/work_orders').then(d => {
+        const list = d.work_orders || [];
+        if (list.length === 0) {
+          workOrdersListEl.innerHTML = '<li class="empty-state">No work orders yet. Create one above or release a production order from MES.</li>';
+        } else {
+          workOrdersListEl.innerHTML = list.map(wo =>
+            `<li><span class="area-id mono">${escapeHtml(wo.id)}</span> <span class="area-robots">${escapeHtml(wo.area_id)} · ${wo.priority} · ${escapeHtml(wo.payload_summary)}</span></li>`
+          ).join('');
+        }
+      }).catch(() => {
+        workOrdersListEl.innerHTML = '<li class="empty-state">Failed to load work orders.</li>';
+      });
+    }
+    loadWorkOrders();
+    setInterval(loadWorkOrders, 4000);
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

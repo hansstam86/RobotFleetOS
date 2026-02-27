@@ -1,0 +1,8 @@
+zone:
+  zone_id: zone-1
+  area_id: area-1
+  robots:
+    - robot-1
+    - robot-2
+messaging:
+  broker: "nats://nats:4222"

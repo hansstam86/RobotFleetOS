@@ -1,0 +1,32 @@
+# RobotFleetOS — default configuration (override per layer via env or file)
+
+# Messaging (Kafka / NATS JetStream)
+messaging:
+  broker: "localhost:9092"   # or nats://localhost:4222
+  topic_prefix: "robotfleetos"
+
+# State store (etcd / Consul)
+state:
+  endpoints: ["http://localhost:2379"]
+
+# Fleet layer
+fleet:
+  scheduler_workers: 10
+  api_listen: ":8080"
+
+# Area layer (one config per area)
+area:
+  area_id: "area-1"
+  zones: ["zone-1", "zone-2"]
+
+# Zone layer (one config per zone)
+zone:
+  zone_id: "zone-1"
+  area_id: "area-1"
+  robots: ["robot-1", "robot-2"]
+
+# Edge layer (one process per robot or cell)
+edge:
+  robot_id: "robot-1"
+  zone_id: "zone-1"
+  robot_protocol: "stub"   # stub | opcua | vendor-api | modbus

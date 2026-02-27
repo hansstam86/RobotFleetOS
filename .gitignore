@@ -1,0 +1,12 @@
+# Go distribution (local install; SDK lives in ~/go-sdk-1.22.4)
+go/
+go*.tar.gz
+.gopath/
+
+# Binaries
+bin/
+
+# Go build cache
+*.exe
+*.test
+*.out

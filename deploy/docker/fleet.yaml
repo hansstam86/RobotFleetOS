@@ -1,0 +1,7 @@
+fleet:
+  scheduler_workers: 10
+  api_listen: ":8080"
+messaging:
+  broker: "nats://nats:4222"
+state:
+  endpoints: ["memory"]

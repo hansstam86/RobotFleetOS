@@ -1,0 +1,10 @@
+area:
+  area_id: area-1
+  zones:
+    - zone-1
+    - zone-2
+    - zone-3
+    - zone-4
+    - zone-5
+messaging:
+  broker: "nats://localhost:4222"

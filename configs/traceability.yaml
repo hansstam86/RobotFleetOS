@@ -1,0 +1,5 @@
+# Traceability — serial/lot genealogy and recall
+# Override with TRACEABILITY_CONFIG, TRACEABILITY_LISTEN
+
+traceability:
+  listen: ":8083"

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WMS — Warehouse Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --success: #3fb950;
+      --warn: #d29922;
+      --danger: #f85149;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Outfit', system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    header h1 { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+    header h1 span { color: var(--accent); }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem;
+      background: rgba(63, 185, 80, 0.15); color: var(--success); border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+    }
+    .status-pill.off { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+    .status-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s ease-in-out infinite; }
+    .status-pill.off::before { animation: none; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; display: grid; gap: 1.5rem; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .card h2 { margin: 0; padding: 0.85rem 1.1rem; font-size: 0.95rem; font-weight: 600; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .card-body { padding: 1.1rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; }
+    input, select {
+      width: 100%; padding: 0.6rem 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2); }
+    button {
+      padding: 0.5rem 0.9rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px;
+      font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: filter 0.15s;
+    }
+    button:hover { filter: brightness(1.1); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.btn-secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+    button.btn-secondary:hover { border-color: var(--accent); }
+    button.btn-small { padding: 0.35rem 0.6rem; font-size: 0.8rem; }
+    button.btn-danger { background: var(--danger); color: #fff; }
+    .msg { padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; }
+    .msg.success { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+    .msg.error { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+    .full-width { grid-column: 1 / -1; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 600px) { .form-row, .form-row-3 { grid-template-columns: 1fr; } }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+    .empty-state { color: var(--muted); font-size: 0.9rem; padding: 1rem 0; text-align: center; }
+    .actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    ul { list-style: none; margin: 0; padding: 0; }
+    ul li { padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    ul li:last-child { border-bottom: none; }
+    .toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .toolbar select { width: auto; min-width: 120px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WMS — <span>Warehouse</span> Management System</h1>
+    <div id="healthStatus" class="status-pill off">Checking…</div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Receive inventory</h2>
+      <div class="card-body">
+        <form id="receiveForm">
+          <div class="form-row-3">
+            <div><label for="recvLoc">Location</label><input id="recvLoc" type="text" placeholder="RECV-01" required></div>
+            <div><label for="recvSku">SKU</label><input id="recvSku" type="text" placeholder="WIDGET-001" required></div>
+            <div><label for="recvQty">Quantity</label><input id="recvQty" type="number" min="1" value="100" required></div>
+          </div>
+          <button type="submit" style="margin-top:0.5rem">Receive</button>
+        </form>
+        <div id="receiveMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Locations</h2>
+      <div class="card-body">
+        <ul id="locationsList"><li class="empty-state">Loading…</li></ul>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Create task</h2>
+      <div class="card-body">
+        <form id="taskForm">
+          <div class="form-row">
+            <div><label for="taskType">Type</label><select id="taskType"><option value="pick">Pick</option><option value="putaway">Putaway</option><option value="move">Move</option></select></div>
+            <div><label for="taskSku">SKU *</label><input id="taskSku" type="text" placeholder="WIDGET-001" required></div>
+          </div>
+          <div class="form-row">
+            <div><label for="taskFrom">From location *</label><input id="taskFrom" type="text" placeholder="RECV-01 or A-01-01"></div>
+            <div><label for="taskTo">To location * (putaway/move)</label><input id="taskTo" type="text" placeholder="A-01-01 or STAGE-01"></div>
+          </div>
+          <div><label for="taskQty">Quantity *</label><input id="taskQty" type="number" min="1" value="10"></div>
+          <button type="submit" style="margin-top:0.5rem">Create task</button>
+        </form>
+        <div id="taskMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Inventory</h2>
+      <div class="card-body">
+        <div class="toolbar"><label style="margin:0">Location:</label><input id="invLocFilter" type="text" placeholder="Filter by location" style="width:10rem"> <label style="margin:0">SKU:</label><input id="invSkuFilter" type="text" placeholder="Filter by SKU" style="width:10rem"> <button type="button" id="invRefresh" class="btn-secondary btn-small">Refresh</button></div>
+        <table><thead><tr><th>Location</th><th>SKU</th><th>Quantity</th><th>Lot</th></tr></thead><tbody id="inventoryBody"><tr><td colspan="4" class="empty-state">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Tasks</h2>
+      <div class="card-body">
+        <div class="toolbar">
+          <label style="margin:0">Status:</label><select id="taskStatusFilter"><option value="">All</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+          <label style="margin:0">Type:</label><select id="taskTypeFilter"><option value="">All</option><option value="pick">Pick</option><option value="putaway">Putaway</option><option value="move">Move</option></select>
+          <button type="button" id="taskRefresh" class="btn-secondary btn-small">Refresh</button>
+        </div>
+        <div id="tasksTableWrap">
+        <table><thead><tr><th>ID</th><th>Type</th><th>SKU</th><th>Qty</th><th>From → To</th><th>Status</th><th>Fleet WO</th><th>Actions</th></tr></thead><tbody id="tasksBody"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const base = '';
+    function api(path) { return fetch(base + path).then(r => r.json()); }
+    function apiPost(path, body) { return fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); }
+    function escapeHtml(s) { if (s == null) return ''; const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
+
+    const healthEl = document.getElementById('healthStatus');
+    function checkHealth() { api('/health').then(d => { healthEl.textContent = d.status === 'ok' ? 'WMS online' : 'Degraded'; healthEl.classList.toggle('off', d.status !== 'ok'); }).catch(() => { healthEl.textContent = 'Offline'; healthEl.classList.add('off'); }); }
+    checkHealth(); setInterval(checkHealth, 8000);
+
+    document.getElementById('receiveForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msgEl = document.getElementById('receiveMsg');
+      msgEl.style.display = 'none';
+      const body = { location_id: document.getElementById('recvLoc').value.trim(), sku: document.getElementById('recvSku').value.trim(), quantity: parseInt(document.getElementById('recvQty').value, 10) || 1 };
+      try {
+        const res = await apiPost('/inventory', body);
+        if (res.ok) { msgEl.textContent = 'Received.'; msgEl.className = 'msg success'; loadInventory(); loadLocations(); } else { const d = await res.json().catch(() => ({})); msgEl.textContent = d.error || res.statusText; msgEl.className = 'msg error'; }
+        msgEl.style.display = 'block';
+      } catch (err) { msgEl.textContent = err.message; msgEl.className = 'msg error'; msgEl.style.display = 'block'; }
+    });
+
+    function loadLocations() {
+      api('/locations').then(d => {
+        const list = d.locations || [];
+        const el = document.getElementById('locationsList');
+        if (list.length === 0) el.innerHTML = '<li class="empty-state">No locations.</li>';
+        else el.innerHTML = list.map(l => `<li><span class="mono">${escapeHtml(l.id)}</span> ${escapeHtml(l.type)} · ${escapeHtml(l.zone_id)}</li>`).join('');
+      }).catch(() => { document.getElementById('locationsList').innerHTML = '<li class="empty-state">Failed to load.</li>'; });
+    }
+    loadLocations();
+
+    document.getElementById('taskForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msgEl = document.getElementById('taskMsg');
+      msgEl.style.display = 'none';
+      const type = document.getElementById('taskType').value;
+      const body = { type: type, sku: document.getElementById('taskSku').value.trim(), quantity: parseInt(document.getElementById('taskQty').value, 10) || 1, from_location_id: document.getElementById('taskFrom').value.trim(), to_location_id: document.getElementById('taskTo').value.trim() };
+      try {
+        const res = await apiPost('/tasks', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) { msgEl.textContent = 'Task created: ' + (data.id || ''); msgEl.className = 'msg success'; loadTasks(); } else { msgEl.textContent = data.error || res.statusText; msgEl.className = 'msg error'; }
+        msgEl.style.display = 'block';
+      } catch (err) { msgEl.textContent = err.message; msgEl.className = 'msg error'; msgEl.style.display = 'block'; }
+    });
+
+    function loadInventory() {
+      const loc = document.getElementById('invLocFilter').value.trim();
+      const sku = document.getElementById('invSkuFilter').value.trim();
+      const q = new URLSearchParams();
+      if (loc) q.set('location_id', loc);
+      if (sku) q.set('sku', sku);
+      api('/inventory?' + q.toString()).then(d => {
+        const list = d.inventory || [];
+        const el = document.getElementById('inventoryBody');
+        if (list.length === 0) el.innerHTML = '<tr><td colspan="4" class="empty-state">No inventory.</td></tr>';
+        else el.innerHTML = list.map(i => `<tr><td class="mono">${escapeHtml(i.location_id)}</td><td class="mono">${escapeHtml(i.sku)}</td><td>${i.quantity}</td><td>${escapeHtml(i.lot)}</td></tr>`).join('');
+      }).catch(() => { document.getElementById('inventoryBody').innerHTML = '<tr><td colspan="4" class="empty-state">Failed.</td></tr>'; });
+    }
+    document.getElementById('invRefresh').addEventListener('click', loadInventory);
+    loadInventory();
+
+    const tasksBody = document.getElementById('tasksBody');
+    document.getElementById('tasksTableWrap').addEventListener('click', function(e) {
+      const btn = e.target.closest('button[data-task-id][data-action]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-task-id');
+      const action = btn.getAttribute('data-action');
+      apiPost('/tasks/' + id + '/' + action).then(res => res.json()).then(() => loadTasks()).catch(() => loadTasks());
+    });
+    function loadTasks() {
+      const status = document.getElementById('taskStatusFilter').value;
+      const type = document.getElementById('taskTypeFilter').value;
+      const q = new URLSearchParams();
+      if (status) q.set('status', status);
+      if (type) q.set('type', type);
+      api('/tasks?' + q.toString()).then(d => {
+        const list = d.tasks || [];
+        if (list.length === 0) { tasksBody.innerHTML = '<tr><td colspan="8" class="empty-state">No tasks.</td></tr>'; return; }
+        tasksBody.innerHTML = list.map(t => {
+          let actions = '';
+          if (t.status === 'pending') actions += `<button type="button" class="btn-secondary btn-small" data-task-id="${escapeHtml(t.id)}" data-action="release">Release</button> <button type="button" class="btn-danger btn-small" data-task-id="${escapeHtml(t.id)}" data-action="cancel">Cancel</button>`;
+          if (t.status === 'in_progress') actions += `<button type="button" class="btn-small" data-task-id="${escapeHtml(t.id)}" data-action="complete">Complete</button>`;
+          const fromTo = (t.from_location_id || '—') + ' → ' + (t.to_location_id || '—');
+          return '<tr><td class="mono">' + escapeHtml(t.id) + '</td><td>' + escapeHtml(t.type) + '</td><td class="mono">' + escapeHtml(t.sku) + '</td><td>' + t.quantity + '</td><td class="mono">' + escapeHtml(fromTo) + '</td><td>' + escapeHtml(t.status) + '</td><td class="mono" style="font-size:0.8rem">' + (t.fleet_work_order_id || '—') + '</td><td><div class="actions">' + actions + '</div></td></tr>';
+        }).join('');
+      }).catch(() => { tasksBody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load.</td></tr>'; });
+    }
+    document.getElementById('taskStatusFilter').addEventListener('change', loadTasks);
+    document.getElementById('taskTypeFilter').addEventListener('change', loadTasks);
+    document.getElementById('taskRefresh').addEventListener('click', loadTasks);
+    loadTasks();
+  </script>
+</body>
+</html>

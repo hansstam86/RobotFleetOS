@@ -1,0 +1,8 @@
+# MES (Manufacturing Execution System) — default config
+# Override with MES_CONFIG, FLEET_API_URL, MES_LISTEN
+
+mes:
+  listen: ":8081"
+
+fleet:
+  api_url: "http://localhost:8080"

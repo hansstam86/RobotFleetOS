@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Traceability — Serial & Lot Genealogy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --success: #3fb950; --danger: #f85149; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Outfit', system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { margin: 0; font-size: 1.35rem; font-weight: 700; }
+    header h1 span { color: var(--accent); }
+    .status-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; background: rgba(63,185,80,0.15); color: var(--success); border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+    .status-pill.off { background: rgba(248,81,73,0.15); color: var(--danger); }
+    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; display: grid; gap: 1.5rem; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .card h2 { margin: 0; padding: 0.85rem 1.1rem; font-size: 0.95rem; font-weight: 600; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .card-body { padding: 1.1rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; }
+    input, select { width: 100%; padding: 0.6rem 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    button { padding: 0.5rem 0.9rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+    button:hover { filter: brightness(1.1); }
+    button.btn-secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .full-width { grid-column: 1 / -1; }
+    .msg { padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; }
+    .msg.success { background: rgba(63,185,80,0.15); color: var(--success); }
+    .msg.error { background: rgba(248,81,73,0.15); color: var(--danger); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+    .empty-state { color: var(--muted); font-size: 0.9rem; padding: 1rem; text-align: center; }
+    .stat { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Traceability — <span>Serial & Lot</span> Genealogy</h1>
+    <div id="healthStatus" class="status-pill off">Checking…</div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Record event</h2>
+      <div class="card-body">
+        <form id="recordForm">
+          <div class="form-row">
+            <div><label for="recSerial">Serial</label><input id="recSerial" type="text" placeholder="SN-001"></div>
+            <div><label for="recLot">Lot</label><input id="recLot" type="text" placeholder="LOT-2024-001"></div>
+          </div>
+          <div class="form-row">
+            <div><label for="recType">Event type *</label><select id="recType"><option value="produced">produced</option><option value="received">received</option><option value="shipped">shipped</option><option value="component_linked">component_linked</option><option value="inspection">inspection</option><option value="rework">rework</option><option value="scrap">scrap</option></select></div>
+            <div><label for="recSku">SKU *</label><input id="recSku" type="text" placeholder="WIDGET-001" required></div>
+          </div>
+          <div class="form-row">
+            <div><label for="recQty">Quantity</label><input id="recQty" type="number" min="0" value="1"></div>
+            <div><label for="recMesOrder">MES order ID</label><input id="recMesOrder" type="text" placeholder="ord-1"></div>
+          </div>
+          <div class="form-row">
+            <div><label for="recStation">Station ID</label><input id="recStation" type="text" placeholder="line-1"></div>
+            <div><label for="recParent">Parent serial (assembly)</label><input id="recParent" type="text" placeholder="ASSY-001"></div>
+          </div>
+          <button type="submit">Record</button>
+        </form>
+        <div id="recordMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Stats</h2>
+      <div class="card-body">
+        <div class="stat" id="totalRecords">—</div>
+        <div style="color:var(--muted);font-size:0.9rem">Total trace records</div>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Genealogy lookup</h2>
+      <div class="card-body">
+        <p style="margin:0 0 0.75rem 0;color:var(--muted);font-size:0.85rem">Look up all events for a serial or lot.</p>
+        <div class="form-row" style="max-width:500px">
+          <div><label for="geneSerial">By serial</label><input id="geneSerial" type="text" placeholder="SN-001"></div>
+          <div><label for="geneLot">By lot</label><input id="geneLot" type="text" placeholder="LOT-2024-001"></div>
+        </div>
+        <button type="button" id="geneBtn" class="btn-secondary" style="margin-top:0.5rem">Look up</button>
+        <div id="geneResults" style="margin-top:1rem"></div>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Recall</h2>
+      <div class="card-body">
+        <p style="margin:0 0 0.75rem 0;color:var(--muted);font-size:0.85rem">Find records by lot, SKU, or date range for recall reporting.</p>
+        <div class="form-row" style="max-width:600px">
+          <div><label for="recallLot">Lot</label><input id="recallLot" type="text"></div>
+          <div><label for="recallSku">SKU</label><input id="recallSku" type="text"></div>
+          <div><label for="recallFrom">From (RFC3339)</label><input id="recallFrom" type="text" placeholder="2024-01-01T00:00:00Z"></div>
+          <div><label for="recallTo">To (RFC3339)</label><input id="recallTo" type="text" placeholder="2024-12-31T23:59:59Z"></div>
+        </div>
+        <button type="button" id="recallBtn" class="btn-secondary" style="margin-top:0.5rem">Query recall</button>
+        <div id="recallResults" style="margin-top:1rem"></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const base = '';
+    function api(path) { return fetch(base + path).then(r => r.json()); }
+    function apiPost(path, body) { return fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); }
+    function escapeHtml(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    const healthEl = document.getElementById('healthStatus');
+    function checkHealth() { api('/health').then(d => { healthEl.textContent = d.status === 'ok' ? 'Traceability online' : 'Degraded'; healthEl.classList.toggle('off', d.status !== 'ok'); }).catch(() => { healthEl.textContent = 'Offline'; healthEl.classList.add('off'); }); }
+    checkHealth(); setInterval(checkHealth, 8000);
+
+    function loadStats() { api('/stats').then(d => { document.getElementById('totalRecords').textContent = d.total_records != null ? d.total_records : '—'; }).catch(() => {}); }
+    loadStats(); setInterval(loadStats, 10000);
+
+    document.getElementById('recordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msgEl = document.getElementById('recordMsg');
+      msgEl.style.display = 'none';
+      const body = { event_type: document.getElementById('recType').value, sku: document.getElementById('recSku').value.trim(), quantity: parseInt(document.getElementById('recQty').value, 10) || 1 };
+      const serial = document.getElementById('recSerial').value.trim();
+      const lot = document.getElementById('recLot').value.trim();
+      if (serial) body.serial = serial;
+      if (lot) body.lot = lot;
+      const mes = document.getElementById('recMesOrder').value.trim();
+      if (mes) body.mes_order_id = mes;
+      const station = document.getElementById('recStation').value.trim();
+      if (station) body.station_id = station;
+      const parent = document.getElementById('recParent').value.trim();
+      if (parent) body.parent_serial = parent;
+      try {
+        const res = await apiPost('/records', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) { msgEl.textContent = 'Recorded: ' + (data.id || ''); msgEl.className = 'msg success'; loadStats(); } else { msgEl.textContent = data.error || res.statusText; msgEl.className = 'msg error'; }
+        msgEl.style.display = 'block';
+      } catch (err) { msgEl.textContent = err.message; msgEl.className = 'msg error'; msgEl.style.display = 'block'; }
+    });
+
+    document.getElementById('geneBtn').addEventListener('click', async () => {
+      const serial = document.getElementById('geneSerial').value.trim();
+      const lot = document.getElementById('geneLot').value.trim();
+      const el = document.getElementById('geneResults');
+      if (!serial && !lot) { el.innerHTML = '<p class="msg error">Enter serial or lot.</p>'; return; }
+      const q = serial ? '?serial=' + encodeURIComponent(serial) : '?lot=' + encodeURIComponent(lot);
+      api('/genealogy' + q).then(d => {
+        const list = d.records || [];
+        if (list.length === 0) el.innerHTML = '<p class="empty-state">No records found.</p>';
+        else el.innerHTML = '<table><thead><tr><th>Time</th><th>Type</th><th>SKU</th><th>Serial</th><th>Lot</th><th>MES Order</th><th>Station</th></tr></thead><tbody>' + list.map(r => '<tr><td class="mono">' + escapeHtml(r.created_at) + '</td><td>' + escapeHtml(r.event_type) + '</td><td class="mono">' + escapeHtml(r.sku) + '</td><td class="mono">' + escapeHtml(r.serial) + '</td><td class="mono">' + escapeHtml(r.lot) + '</td><td class="mono">' + escapeHtml(r.mes_order_id) + '</td><td class="mono">' + escapeHtml(r.station_id) + '</td></tr>').join('') + '</tbody></table>';
+      }).catch(() => { el.innerHTML = '<p class="msg error">Request failed.</p>'; });
+    });
+
+    document.getElementById('recallBtn').addEventListener('click', async () => {
+      const lot = document.getElementById('recallLot').value.trim();
+      const sku = document.getElementById('recallSku').value.trim();
+      const from = document.getElementById('recallFrom').value.trim();
+      const to = document.getElementById('recallTo').value.trim();
+      const q = new URLSearchParams();
+      if (lot) q.set('lot', lot);
+      if (sku) q.set('sku', sku);
+      if (from) q.set('from', from);
+      if (to) q.set('to', to);
+      const el = document.getElementById('recallResults');
+      api('/recall?' + q.toString()).then(d => {
+        const list = d.records || [];
+        if (list.length === 0) el.innerHTML = '<p class="empty-state">No records match.</p>';
+        else el.innerHTML = '<table><thead><tr><th>Time</th><th>Type</th><th>SKU</th><th>Serial</th><th>Lot</th><th>MES Order</th></tr></thead><tbody>' + list.map(r => '<tr><td class="mono">' + escapeHtml(r.created_at) + '</td><td>' + escapeHtml(r.event_type) + '</td><td class="mono">' + escapeHtml(r.sku) + '</td><td class="mono">' + escapeHtml(r.serial) + '</td><td class="mono">' + escapeHtml(r.lot) + '</td><td class="mono">' + escapeHtml(r.mes_order_id) + '</td></tr>').join('') + '</tbody></table>';
+      }).catch(() => { el.innerHTML = '<p class="msg error">Request failed.</p>'; });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# WMS (Warehouse Management System) — default config
+# Override with WMS_CONFIG, FLEET_API_URL, WMS_LISTEN
+
+wms:
+  listen: ":8082"
+  warehouse_area_id: "area-1"
+
+fleet:
+  api_url: "http://localhost:8080"

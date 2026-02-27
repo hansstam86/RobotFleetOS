@@ -1,0 +1,6 @@
+edge:
+  robot_id: robot-96
+  zone_id: zone-1
+  robot_protocol: stub
+messaging:
+  broker: "nats://localhost:4222"
