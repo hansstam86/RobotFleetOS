@@ -1,0 +1,5 @@
+erp:
+  listen: ":8087"
+mes:
+  api_url: "http://localhost:8081"
+  default_area_id: "area-1"

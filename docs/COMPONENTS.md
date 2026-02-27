@@ -60,7 +60,9 @@ RobotFleetOS/
 
 ## Factory Areas & Enterprise Systems
 
-Factory areas (PCBA, molding, CNC, warehouse, assembly, packaging, shipping, quality lab, rework) and enterprise systems (WMS, MES, PLM, ERP, QMS, CMMS, APS, traceability, andon) are described in [FACTORY_STACK_AND_SYSTEMS.md](FACTORY_STACK_AND_SYSTEMS.md). **MES** and **WMS** are the primary work-order sources for the Fleet layer; Fleet is the execution layer for robots and automation. **Traceability** records serial/lot events and supports genealogy and recall. **QMS** handles inspections, NCRs, and holds. **CMMS** manages equipment and maintenance work orders and can submit them to Fleet. See [MES.md](MES.md), [WMS.md](WMS.md), [TRACEABILITY.md](TRACEABILITY.md), [QMS.md](QMS.md), and [CMMS.md](CMMS.md) for runbooks and APIs.
+Factory areas (PCBA, molding, CNC, warehouse, assembly, packaging, shipping, quality lab, rework) and enterprise systems (WMS, MES, PLM, ERP, QMS, CMMS, APS, traceability, andon) are described in [FACTORY_STACK_AND_SYSTEMS.md](FACTORY_STACK_AND_SYSTEMS.md). **MES** and **WMS** are the primary work-order sources for the Fleet layer; Fleet is the execution layer for robots and automation. **Traceability** records serial/lot events and supports genealogy and recall. **QMS** handles inspections, NCRs, and holds. **CMMS** manages equipment and maintenance work orders and can submit them to Fleet. **PLM** manages products, BOMs, and ECOs. **ERP** is the order source (create orders, submit to MES). See [MES.md](MES.md), [WMS.md](WMS.md), [TRACEABILITY.md](TRACEABILITY.md), [QMS.md](QMS.md), [CMMS.md](CMMS.md), [PLM.md](PLM.md), and [ERP.md](ERP.md) for runbooks and APIs.
+
+**Kubernetes** deployment is under `k8s/` with Kustomize; see [KUBERNETES.md](KUBERNETES.md) for build, push, and deploy steps.
 
 ---
 

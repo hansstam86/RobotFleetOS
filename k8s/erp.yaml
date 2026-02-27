@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp
+  namespace: robotfleetos
+  labels:
+    app: erp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: erp
+  template:
+    metadata:
+      labels:
+        app: erp
+    spec:
+      containers:
+        - name: erp
+          image: robotfleetos/robotfleetos:latest
+          imagePullPolicy: IfNotPresent
+          command: ["./bin/erp"]
+          ports:
+            - containerPort: 8087
+          env:
+            - name: MES_API_URL
+              value: "http://mes:8081"
+            - name: ERP_DEFAULT_AREA_ID
+              value: "area-1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp
+  namespace: robotfleetos
+spec:
+  selector:
+    app: erp
+  ports:
+    - port: 8087
+      targetPort: 8087
+      name: http

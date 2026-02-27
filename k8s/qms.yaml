@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qms
+  namespace: robotfleetos
+  labels:
+    app: qms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qms
+  template:
+    metadata:
+      labels:
+        app: qms
+    spec:
+      containers:
+        - name: qms
+          image: robotfleetos/robotfleetos:latest
+          imagePullPolicy: IfNotPresent
+          command: ["./bin/qms"]
+          ports:
+            - containerPort: 8084
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qms
+  namespace: robotfleetos
+spec:
+  selector:
+    app: qms
+  ports:
+    - port: 8084
+      targetPort: 8084
+      name: http

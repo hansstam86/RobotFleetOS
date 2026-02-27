@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wms
+  namespace: robotfleetos
+  labels:
+    app: wms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wms
+  template:
+    metadata:
+      labels:
+        app: wms
+    spec:
+      containers:
+        - name: wms
+          image: robotfleetos/robotfleetos:latest
+          imagePullPolicy: IfNotPresent
+          command: ["./bin/wms"]
+          ports:
+            - containerPort: 8082
+          env:
+            - name: FLEET_API_URL
+              value: "http://fleet:8080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wms
+  namespace: robotfleetos
+spec:
+  selector:
+    app: wms
+  ports:
+    - port: 8082
+      targetPort: 8082
+      name: http

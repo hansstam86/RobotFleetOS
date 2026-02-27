@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet
+  namespace: robotfleetos
+  labels:
+    app: fleet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleet
+  template:
+    metadata:
+      labels:
+        app: fleet
+    spec:
+      containers:
+        - name: fleet
+          image: robotfleetos/robotfleetos:latest
+          imagePullPolicy: IfNotPresent
+          command: ["./bin/all"]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MESSAGING_URL
+              value: ""
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleet
+  namespace: robotfleetos
+spec:
+  selector:
+    app: fleet
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http

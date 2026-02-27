@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PLM — Product Lifecycle</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --success: #3fb950; --danger: #f85149; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Outfit', system-ui, sans-serif; font-size: 15px; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; }
+    header h1 { margin: 0; font-size: 1.35rem; }
+    header h1 span { color: var(--accent); }
+    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; display: grid; gap: 1.5rem; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 700px) { main { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .card h2 { margin: 0; padding: 0.85rem 1.1rem; font-size: 0.95rem; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .card-body { padding: 1.1rem; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.25rem; }
+    input, select { width: 100%; max-width: 20rem; padding: 0.5rem 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.9rem; }
+    button { padding: 0.5rem 0.9rem; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; margin-right: 0.35rem; margin-bottom: 0.35rem; }
+    button.btn-secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+    button.btn-small { padding: 0.35rem 0.6rem; font-size: 0.8rem; }
+    .full-width { grid-column: 1 / -1; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .msg { padding: 0.5rem; border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; }
+    .msg.success { background: rgba(63,185,80,0.15); color: var(--success); }
+    .msg.error { background: rgba(248,81,73,0.15); color: var(--danger); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-size: 0.8rem; }
+    .empty-state { color: var(--muted); padding: 1rem; text-align: center; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header><h1>PLM — <span>Product</span> Lifecycle</h1></header>
+  <main>
+    <section class="card">
+      <h2>Add product</h2>
+      <div class="card-body">
+        <form id="productForm">
+          <div><label>SKU *</label><input id="prodSku" type="text" required placeholder="SCOOTER-001"></div>
+          <div><label>Name *</label><input id="prodName" type="text" required></div>
+          <div class="form-row">
+            <div><label>Revision</label><input id="prodRevision" type="text" placeholder="A" value="A"></div>
+            <div><label>Status</label><select id="prodStatus"><option value="draft">Draft</option><option value="released">Released</option><option value="obsolete">Obsolete</option></select></div>
+          </div>
+          <button type="submit">Add product</button>
+        </form>
+        <div id="productMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Create ECO</h2>
+      <div class="card-body">
+        <form id="ecoForm">
+          <div><label>Title *</label><input id="ecoTitle" type="text" required></div>
+          <div><label>Description</label><input id="ecoDesc" type="text"></div>
+          <div><label>Product ID</label><input id="ecoProductId" type="text" placeholder="prod-1"></div>
+          <button type="submit">Create ECO</button>
+        </form>
+        <div id="ecoMsg" class="msg" style="display:none"></div>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>Products</h2>
+      <div class="card-body">
+        <div style="margin-bottom:0.75rem">Status: <select id="prodFilterStatus"><option value="">All</option><option value="draft">Draft</option><option value="released">Released</option><option value="obsolete">Obsolete</option></select> <button type="button" id="productRefresh" class="btn-secondary btn-small">Refresh</button></div>
+        <table><thead><tr><th>ID</th><th>SKU</th><th>Name</th><th>Revision</th><th>Status</th></tr></thead><tbody id="productBody"><tr><td colspan="5" class="empty-state">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>BOM (Bill of Materials)</h2>
+      <div class="card-body">
+        <div style="margin-bottom:0.75rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap">
+          <label style="margin:0">Product ID:</label>
+          <input id="bomProductId" type="text" placeholder="prod-1" style="width:8rem">
+          <button type="button" id="bomLoad" class="btn-secondary btn-small">Load BOM</button>
+          <span style="color:var(--muted)" id="bomProductLabel"></span>
+        </div>
+        <div style="margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap">
+          <input id="bomChildSku" type="text" placeholder="Child SKU" style="width:10rem">
+          <input id="bomChildRev" type="text" placeholder="Rev" style="width:4rem">
+          <input id="bomQty" type="number" step="any" min="0.001" placeholder="Qty" style="width:5rem" value="1">
+          <button type="button" id="bomAdd" class="btn-small">Add line</button>
+        </div>
+        <table><thead><tr><th>Child SKU</th><th>Revision</th><th>Quantity</th><th>Actions</th></tr></thead><tbody id="bomBody"><tr><td colspan="4" class="empty-state">Select a product and Load BOM.</td></tr></tbody></table>
+        <div id="bomMsg" class="msg" style="display:none;margin-top:0.5rem"></div>
+      </div>
+    </section>
+    <section class="card full-width">
+      <h2>ECOs</h2>
+      <div class="card-body">
+        <div style="margin-bottom:0.75rem">Status: <select id="ecoFilterStatus"><option value="">All</option><option value="draft">Draft</option><option value="approved">Approved</option><option value="implemented">Implemented</option></select> <button type="button" id="ecoRefresh" class="btn-secondary btn-small">Refresh</button></div>
+        <table><thead><tr><th>ID</th><th>Title</th><th>Product ID</th><th>Status</th><th>Updated</th></tr></thead><tbody id="ecoBody"><tr><td colspan="5" class="empty-state">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+  </main>
+  <script>
+    const base = '';
+    function api(path) { return fetch(base + path).then(r => r.json()); }
+    function apiPost(path, body) { return fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); }
+    function apiPut(path, body) { return fetch(base + path, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); }
+    function apiDelete(path) { return fetch(base + path, { method: 'DELETE' }); }
+    function escapeHtml(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    document.getElementById('productForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('productMsg');
+      msg.style.display = 'none';
+      const body = { sku: document.getElementById('prodSku').value.trim(), name: document.getElementById('prodName').value.trim(), revision: document.getElementById('prodRevision').value.trim() || 'A', status: document.getElementById('prodStatus').value };
+      try {
+        const res = await apiPost('/products', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) { msg.textContent = 'Added: ' + (data.id || ''); msg.className = 'msg success'; loadProducts(); } else { msg.textContent = data.error || res.statusText; msg.className = 'msg error'; }
+        msg.style.display = 'block';
+      } catch (err) { msg.textContent = err.message; msg.className = 'msg error'; msg.style.display = 'block'; }
+    };
+
+    document.getElementById('ecoForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('ecoMsg');
+      msg.style.display = 'none';
+      const body = { title: document.getElementById('ecoTitle').value.trim(), description: document.getElementById('ecoDesc').value.trim() };
+      const pid = document.getElementById('ecoProductId').value.trim();
+      if (pid) body.product_id = pid;
+      try {
+        const res = await apiPost('/ecos', body);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) { msg.textContent = 'Created: ' + (data.id || ''); msg.className = 'msg success'; loadECOs(); } else { msg.textContent = data.error || res.statusText; msg.className = 'msg error'; }
+        msg.style.display = 'block';
+      } catch (err) { msg.textContent = err.message; msg.className = 'msg error'; msg.style.display = 'block'; }
+    };
+
+    let productList = [];
+    async function loadProducts() {
+      const status = document.getElementById('prodFilterStatus').value;
+      const d = await api('/products?status=' + encodeURIComponent(status));
+      productList = d.products || [];
+      const el = document.getElementById('productBody');
+      if (productList.length === 0) el.innerHTML = '<tr><td colspan="5" class="empty-state">No products.</td></tr>';
+      else el.innerHTML = productList.map(p => '<tr><td class="mono">' + escapeHtml(p.id) + '</td><td class="mono">' + escapeHtml(p.sku) + '</td><td>' + escapeHtml(p.name) + '</td><td class="mono">' + escapeHtml(p.revision) + '</td><td>' + escapeHtml(p.status) + '</td></tr>').join('');
+    }
+
+    let currentBomProductId = '';
+    async function loadBOM() {
+      const pid = document.getElementById('bomProductId').value.trim();
+      if (!pid) { document.getElementById('bomMsg').textContent = 'Enter product ID'; document.getElementById('bomMsg').className = 'msg error'; document.getElementById('bomMsg').style.display = 'block'; return; }
+      currentBomProductId = pid;
+      const prod = productList.find(p => p.id === pid);
+      document.getElementById('bomProductLabel').textContent = prod ? prod.sku + ' rev ' + prod.revision : '';
+      const d = await api('/products/' + pid + '/bom');
+      const lines = d.bom || [];
+      const el = document.getElementById('bomBody');
+      if (lines.length === 0) el.innerHTML = '<tr><td colspan="4" class="empty-state">No BOM lines. Add one below.</td></tr>';
+      else el.innerHTML = lines.map(l => '<tr><td class="mono">' + escapeHtml(l.child_sku) + '</td><td class="mono">' + escapeHtml(l.child_revision) + '</td><td>' + l.quantity + '</td><td><button type="button" class="btn-small btn-secondary" data-line-id="' + escapeHtml(l.id) + '">Remove</button></td></tr>').join('');
+    }
+
+    document.getElementById('bomLoad').onclick = () => { loadProducts().then(loadBOM); }
+
+    document.getElementById('bomAdd').onclick = async () => {
+      if (!currentBomProductId) { document.getElementById('bomMsg').textContent = 'Load a product BOM first'; document.getElementById('bomMsg').className = 'msg error'; document.getElementById('bomMsg').style.display = 'block'; return; }
+      const childSku = document.getElementById('bomChildSku').value.trim();
+      const qty = parseFloat(document.getElementById('bomQty').value) || 1;
+      if (!childSku) return;
+      const body = { child_sku: childSku, child_revision: document.getElementById('bomChildRev').value.trim(), quantity: qty };
+      const res = await apiPost('/products/' + currentBomProductId + '/bom', body);
+      const data = await res.json().catch(() => ({}));
+      document.getElementById('bomMsg').style.display = 'block';
+      if (res.ok) { document.getElementById('bomMsg').textContent = 'Added.'; document.getElementById('bomMsg').className = 'msg success'; loadBOM(); document.getElementById('bomChildSku').value = ''; document.getElementById('bomQty').value = '1'; } else { document.getElementById('bomMsg').textContent = data.error || res.statusText; document.getElementById('bomMsg').className = 'msg error'; }
+    };
+
+    document.getElementById('bomBody').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-line-id]');
+      if (!btn || !currentBomProductId) return;
+      const lineId = btn.getAttribute('data-line-id');
+      const res = await apiDelete('/products/' + currentBomProductId + '/bom/' + lineId);
+      document.getElementById('bomMsg').style.display = 'block';
+      if (res.ok) { document.getElementById('bomMsg').textContent = 'Removed.'; document.getElementById('bomMsg').className = 'msg success'; loadBOM(); } else { document.getElementById('bomMsg').textContent = 'Delete failed'; document.getElementById('bomMsg').className = 'msg error'; }
+    });
+
+    async function loadECOs() {
+      const status = document.getElementById('ecoFilterStatus').value;
+      const d = await api('/ecos?status=' + encodeURIComponent(status));
+      const list = d.ecos || [];
+      const el = document.getElementById('ecoBody');
+      if (list.length === 0) el.innerHTML = '<tr><td colspan="5" class="empty-state">No ECOs.</td></tr>';
+      else el.innerHTML = list.map(e => '<tr><td class="mono">' + escapeHtml(e.id) + '</td><td>' + escapeHtml(e.title) + '</td><td class="mono">' + escapeHtml(e.product_id) + '</td><td>' + escapeHtml(e.status) + '</td><td class="mono">' + escapeHtml(e.updated_at) + '</td></tr>').join('');
+    }
+
+    document.getElementById('productRefresh').onclick = loadProducts;
+    document.getElementById('prodFilterStatus').onchange = loadProducts;
+    document.getElementById('ecoRefresh').onclick = loadECOs;
+    document.getElementById('ecoFilterStatus').onchange = loadECOs;
+    loadProducts();
+    loadECOs();
+  </script>
+</body>
+</html>

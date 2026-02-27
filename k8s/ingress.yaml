@@ -1,0 +1,84 @@
+# Optional: expose services via Ingress (enable for your cluster/ingress controller).
+# Minikube: minikube addons enable ingress
+# Then: kubectl apply -f k8s/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: robotfleetos
+  namespace: robotfleetos
+  annotations:
+    # nginx: rewrite paths if needed; adjust for your ingress controller
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    # Use host or localhost (minikube: add minikube ip to /etc/hosts as fleet.robotfleetos.local etc.)
+    - host: fleet.robotfleetos.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fleet
+                port:
+                  number: 8080
+    - host: mes.robotfleetos.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mes
+                port:
+                  number: 8081
+    - host: wms.robotfleetos.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wms
+                port:
+                  number: 8082
+    - host: traceability.robotfleetos.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traceability
+                port:
+                  number: 8083
+    - host: qms.robotfleetos.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: qms
+                port:
+                  number: 8084
+    - host: cmms.robotfleetos.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cmms
+                port:
+                  number: 8085
+    - host: plm.robotfleetos.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: plm
+                port:
+                  number: 8086

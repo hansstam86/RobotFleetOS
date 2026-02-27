@@ -6,7 +6,7 @@ You can **simulate the full RobotFleetOS stack** (fleet, area, zone, edge) and *
 
 ## 0. Launch all systems at once
 
-To run **Fleet, MES, WMS, and Traceability** together:
+To run **Fleet, MES, WMS, Traceability, QMS, CMMS, PLM, and ERP** together:
 
 ```bash
 ./run-all-systems.sh
@@ -22,6 +22,8 @@ This builds all binaries (if needed), starts each system in the background, and 
 | Traceability  | http://localhost:8083    |
 | QMS               | http://localhost:8084    |
 | CMMS              | http://localhost:8085    |
+| PLM               | http://localhost:8086    |
+| ERP               | http://localhost:8087    |
 | Fleet maintenance | http://localhost:8080/maintenance (firmware, maintenance) |
 
 ---

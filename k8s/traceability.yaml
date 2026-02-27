@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traceability
+  namespace: robotfleetos
+  labels:
+    app: traceability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traceability
+  template:
+    metadata:
+      labels:
+        app: traceability
+    spec:
+      containers:
+        - name: traceability
+          image: robotfleetos/robotfleetos:latest
+          imagePullPolicy: IfNotPresent
+          command: ["./bin/traceability"]
+          ports:
+            - containerPort: 8083
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traceability
+  namespace: robotfleetos
+spec:
+  selector:
+    app: traceability
+  ports:
+    - port: 8083
+      targetPort: 8083
+      name: http
